@@ -32,7 +32,7 @@ export const DailyForecast = ({ data, timezoneOffset }: DailyForecastProps) => {
               }}
             >
               <Typography variant="subtitle2" fontWeight="bold">
-                {formatDay(day.dt, timezoneOffset)}
+                {formatDay(day.dt)}
               </Typography>
               <Box my={1}>
                 {getWeatherIcon(day.weather[0].icon)}

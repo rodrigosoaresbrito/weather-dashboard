@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { Autocomplete, TextField, CircularProgress } from '@mui/material';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Autocomplete, TextField, CircularProgress, Box } from '@mui/material';
 import axios from 'axios';
+import debounce from 'lodash.debounce';
+
 
 interface CityOption {
   name: string;
   lat: number;
   lon: number;
   country: string;
-  state?: string;
+  region: string;
 }
 
 interface CitySearchProps {
@@ -20,44 +22,47 @@ export const CitySearch = ({ onCitySelect }: CitySearchProps) => {
   const [loading, setLoading] = useState(false);
   const [inputValue, setInputValue] = useState('');
 
-  useEffect(() => {
-    if (inputValue.length < 3) {
+  // Função que busca os dados na API
+  const fetchCities = async (query: string) => {
+    if (query.length < 3) {
       setOptions([]);
-      return undefined;
-    }
-
-    const delayDebounceFn = setTimeout(async () => {
-      setLoading(true);
-      try {
-        const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
-        const response = await axios.get(
-          `https://api.openweathermap.org/geo/1.0/direct`,
-          {
-            params: {
-              q: inputValue,
-              limit: 5,
-              appid: API_KEY,
-            },
-          },
-        );
-        setOptions(response.data as CityOption[]);
-      } catch (error) {
-        console.error('Erro ao buscar cidades:', error);
-      }
       setLoading(false);
-    }, 500);
+      return;
+    }
+    setLoading(true);
+    try {
+      const API_KEY = process.env.NEXT_PUBLIC_WEATHERAPI_KEY;
+      const response = await axios.get(
+        `https://api.weatherapi.com/v1/search.json`,
+        {
+          params: {
+            key: API_KEY, 
+            q: query,
+          },
+        },
+      );
+      setOptions(response.data as CityOption[]);
+    } catch (error) {
+      console.error('Erro ao buscar cidades:', error);
+      setOptions([]); 
+    }
+    setLoading(false);
+  };
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [inputValue]);
+  const debouncedFetch = useMemo(() => debounce(fetchCities, 500), []);
+
+  useEffect(() => {
+    debouncedFetch(inputValue);
+  }, [inputValue, debouncedFetch]);
 
   return (
     <Autocomplete
       id="city-search-autocomplete"
-      sx={{ width: 300, mb: 2, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 1 }}
+      sx={{ width: 300, mb: 2 }}
       open={open}
       onOpen={() => setOpen(true)}
       onClose={() => setOpen(false)}
-      getOptionLabel={(option) => `${option.name}, ${option.state || ''} ${option.country}`}
+      getOptionLabel={(option) => `${option.name}, ${option.region}`}
       options={options}
       loading={loading}
       onInputChange={(event, newInputValue) => {
@@ -65,7 +70,7 @@ export const CitySearch = ({ onCitySelect }: CitySearchProps) => {
       }}
       onChange={(event, value) => {
         if (value) {
-          onCitySelect(value);
+          onCitySelect(value); 
         }
       }}
       renderInput={(params) => (
@@ -73,6 +78,13 @@ export const CitySearch = ({ onCitySelect }: CitySearchProps) => {
           {...params}
           label="Buscar outra cidade..."
           variant="filled"
+          sx={{
+            backgroundColor: 'rgba(255,255,255,0.2)',
+            borderRadius: 1,
+            '& .MuiFilledInput-root': {
+                backgroundColor: 'transparent',
+            },
+          }}
           InputProps={{
             ...params.InputProps,
             endAdornment: (
@@ -83,6 +95,11 @@ export const CitySearch = ({ onCitySelect }: CitySearchProps) => {
             ),
           }}
         />
+      )}
+      renderOption={(props, option) => (
+        <Box component="li" {...props} key={`${option.lat}-${option.lon}`}>
+          {option.name}, {option.region}, {option.country}
+        </Box>
       )}
     />
   );

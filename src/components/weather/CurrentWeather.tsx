@@ -23,18 +23,9 @@ export const CurrentWeather = ({ data, cityName }: CurrentWeatherProps) => {
       }}
     >
       <Grid container spacing={2} alignItems="center">
-        {/* Lado Esquerdo: Cidade e Temperatura */}
         <Grid item xs={12} md={6}>
           <Typography variant="h4" component="h1" fontWeight="bold">
             {cityName}
-          </Typography>
-          <Typography variant="subtitle1" gutterBottom>
-            {currentDate.toLocaleDateString('pt-BR', {
-              weekday: 'long',
-              month: 'long',
-              day: 'numeric',
-              timeZone: 'UTC'
-            })}
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
             {getWeatherIcon(current.weather[0].icon)}
@@ -53,7 +44,7 @@ export const CurrentWeather = ({ data, cityName }: CurrentWeatherProps) => {
               <WbSunny sx={{ fontSize: 30 }} />
               <Typography>Nascer do Sol</Typography>
               <Typography fontWeight="bold">
-                {formatTime(current.sunrise, timezone_offset)}
+                {current.sunrise}
               </Typography>
             </Box>
           </Grid>
@@ -62,7 +53,7 @@ export const CurrentWeather = ({ data, cityName }: CurrentWeatherProps) => {
               <NightsStay sx={{ fontSize: 30 }} />
               <Typography>Pôr do Sol</Typography>
               <Typography fontWeight="bold">
-                {formatTime(current.sunset, timezone_offset)}
+                {current.sunset}
               </Typography>
             </Box>
           </Grid>
